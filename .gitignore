@@ -33,6 +33,7 @@
 *.opensdf
 *.pdb
 *.ilk
+*.obj
  
 # OS generated files #
 ######################

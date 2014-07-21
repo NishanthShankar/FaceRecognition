@@ -30,7 +30,9 @@
 *.sdf
 *.vcxproj
 *.tlog
-
+*.opensdf
+*.pdb
+*.ilk
  
 # OS generated files #
 ######################

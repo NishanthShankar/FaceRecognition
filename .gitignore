@@ -34,7 +34,8 @@
 *.pdb
 *.ilk
 *.obj
- 
+*.idb
+
 # OS generated files #
 ######################
 .DS_Store

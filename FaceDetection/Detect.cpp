@@ -65,14 +65,15 @@ public:
 	}
 }skinD;
 
-
-
-int main()
+int faceDetect(int fileNumber)
 {
+	HOGDescriptor hog;
+	hog.setSVMDetector(HOGDescriptor::getDefaultPeopleDetector());
+	
 	int big, i, times = 0;
 	std::ostringstream oss;
-	string path = "C:/Users/Nishanth/Downloads/Games/Recordfiles/";
-	string filename = path + "1.avi";
+	string path = "C:/LensBricks/Datasets/Office/FaceDatabase/";
+	string filename = to_string(fileNumber) + ".avi";
 	std::vector<Rect> faceBox; 
 	cv::Rect tempBox;
 	std::vector<Rect> eyeBox;
@@ -80,14 +81,11 @@ int main()
 	cv::Rect rightEyeBox;
 	cv::Mat frame;
 	cv::Mat cropped;
-	cv::Mat processed;
-	cv::Mat rec;
-	cv::namedWindow("Input");
-	cv::namedWindow("Recognition");
-	cv::VideoCapture video("C:/LensBricks/depth.gdp");
+	cv::VideoCapture video(path + filename);
 	CascadeClassifier faceClassifier;
 	CascadeClassifier eyeClassifier;
 	eyeClassifier.load(eyeFile);
+	unsigned int frameNumber = 0;
 	if (!faceClassifier.load(faceFile) && !eyeClassifier.load(eyeFile))
 	{
 		cout << "xml File Error";
@@ -106,7 +104,7 @@ int main()
 	while (CFE != 27)
 	{
 		video >> frame;
-		frame = imread("C:/LensBricks/pics/mywonderfulteam/43.jpg");
+		//frame = imread("C:/LensBricks/pics/mywonderfulteam/43.jpg");
 		double dummyLow, dummyHigh;
 		if (frame.empty())
 		{
@@ -115,6 +113,8 @@ int main()
 		}
 		big = 0;
 		skinFrame=skinD.skinDetect(frame);
+		imshow("SkinDetected", skinFrame);
+		cv::waitKey(1);
 		faceClassifier.detectMultiScale(skinFrame, faceBox, 1.1, 3, 0, cv::Size(50, 50));
 		if (!faceBox.empty())
 		{
@@ -141,25 +141,45 @@ int main()
 			float rotation;
 			if (eyeBox.size()>1)
 			{
-				Point leftPoint(eyeBox[0].x / 2, eyeBox[0].y / 2), rightPoint(eyeBox[1].x / 2, eyeBox[1].y / 2);
-				rotation = fastAtan2(rightPoint.y - leftPoint.y, rightPoint.x - leftPoint.x);
-				//rotation = -atan2((eyeBox[0].y - eyeBox[1].y)/2, (eyeBox[0].x - eyeBox[1].x)/2);
-				//rotation *= 57.295;
-				//int trial = distance(leftPoint, rightPoint);
-				Mat rotMatrix;
-				cv::Size destSize = cropped.size();
-				rotMatrix = getRotationMatrix2D(cv::Point(cropped.rows / 2, cropped.cols / 2), rotation, 1);
-				warpAffine(cropped, cropped, rotMatrix, cropped.size());
-				tempBox.width = floor(0.80*tempBox.width);
-				tempBox.height = floor(0.80*tempBox.height);
-				tempBox.x = floor(tempBox.x - tempBox.width / 2);
-				tempBox.y = floor(tempBox.y - tempBox.height / 2);
-				cropped = cropped(tempBox);
-				imshow("Rotated", cropped);
-				cv::waitKey(1);
-			}		
+				string writePath = "C:/LensBricks/datasets/Office/FaceDatabase/images/" + to_string(fileNumber) + "_" + to_string(frameNumber) + ".png";
+				imwrite(writePath,cropped);
+
+			}
+			frameNumber++;
 		}
 
 	}
 	return 1;
+}
+
+void peopleDetect()
+{
+	HOGDescriptor hog;
+	CascadeClassifier fullbody("C:/OpenCV/opencv/sources/data/haarcascades/haarcascade_mcs_upperbody.xml");
+	hog.setSVMDetector(HOGDescriptor::getDefaultPeopleDetector());
+	cv::VideoCapture video("C:\\LensBricks\\Datasets\\EPFL\\4p-c0.avi");
+	cv::Mat frame;
+	std::vector<cv::Rect> found;
+	while (1)
+	{
+		video >> frame;
+		cv::Mat ups;
+		//hog.detectMultiScale(frame, found, 0);
+		fullbody.detectMultiScale(frame, found);
+		for (size_t i = 0; i < found.size(); i++)
+		{
+			cv::rectangle(frame, found[i], cv::Scalar(255, 0, 255), 2);
+
+		}
+		imshow("frame", frame);
+		cv::waitKey(1);
+	}
+}
+void main()
+{
+	int length = 60;
+	for (size_t i = 4; i < length; i++)
+	{
+		faceDetect(i);
+	}
 }

@@ -13,6 +13,8 @@ using namespace cv;
 
 String faceFile = "C:\\OpenCV\\opencv\\sources\\data\\haarcascades\\haarcascade_frontalface_alt2.xml";
 String eyeFile = "C:\\OpenCV\\opencv\\sources\\data\\haarcascades\\haarcascade_mcs_righteye.xml";
+String earFile = "C:\\OpenCV\\opencv\\sources\\data\\haarcascades\\haarcascade_mcs_rightear.xml";
+
 
 void rotate(cv::Mat& src, double angle, cv::Mat& dst, cv::Point centre = cv::Point())
 {
@@ -65,6 +67,11 @@ public:
 	}
 }skinD;
 
+int addd(int x, int y)
+{
+	return(x + y);
+}
+
 int faceDetect(int fileNumber)
 {
 	HOGDescriptor hog;
@@ -83,9 +90,16 @@ int faceDetect(int fileNumber)
 	cv::Mat cropped;
 	cv::VideoCapture video(path + filename);
 	CascadeClassifier faceClassifier;
+	CascadeClassifier earClassifier;
 	CascadeClassifier eyeClassifier;
-	eyeClassifier.load(eyeFile);
 	unsigned int frameNumber = 0;
+	if (!earClassifier.load(earFile))
+	{
+		cout << " ear xml File Error";
+		return 1;
+
+	}
+	eyeClassifier.load(eyeFile);
 	if (!faceClassifier.load(faceFile) && !eyeClassifier.load(eyeFile))
 	{
 		cout << "xml File Error";
@@ -104,7 +118,16 @@ int faceDetect(int fileNumber)
 	while (CFE != 27)
 	{
 		video >> frame;
-		//frame = imread("C:/LensBricks/pics/mywonderfulteam/43.jpg");
+		frame = imread("C:/LensBricks/Samples/ear2.jpg");
+		flip(frame, frame, 1);
+		earClassifier.detectMultiScale(frame, faceBox);
+		for (size_t i = 0; i < faceBox.size(); i++)
+		{
+			cv::rectangle(frame, faceBox[i], Scalar(255, 0, 255));
+		}
+		
+		imshow("Ear detection", frame);
+		waitKey();
 		double dummyLow, dummyHigh;
 		if (frame.empty())
 		{
@@ -177,6 +200,35 @@ void peopleDetect()
 }
 void main()
 {
+	cv::VideoCapture cam1(2);
+	cv::VideoCapture cam2(1);
+	CascadeClassifier sideFace("C:/OpenCV/opencv/sources/data/haarcascades/haarcascade_profileface.xml");
+	CascadeClassifier frontFace("C:\\OpenCV\\opencv\\sources\\data\\haarcascades\\haarcascade_frontalface_alt2.xml");
+	cv::VideoWriter frontCap, sideCap;
+	Mat fram1, fram2,skinFrame;
+	cam1 >> fram1;
+	cam2 >> fram2;
+	std::vector<cv::Rect> sideBox;
+	std::vector<cv::Rect> frontBox;
+	frontCap.open("frontCap.avi", CV_FOURCC('D', 'I', 'V', 'X'), 30, fram1.size(), true);
+	sideCap.open("sideCap.avi", CV_FOURCC('D', 'I', 'V', 'X'), 30, fram2.size(), true);
+	int writeCount = 0;
+	while (1)
+	{
+		cam1 >> fram1;
+		cam2 >> fram2;
+		
+		sideFace.detectMultiScale(fram2, sideBox);
+		skinFrame = skinD.skinDetect(fram1);
+		frontFace.detectMultiScale(skinFrame, frontBox);
+		if (sideBox.size() > 0 || frontBox.size() > 0)
+			writeCount = 20;
+		if (writeCount--)
+		{
+			frontCap.write(fram1);
+			sideCap.write(fram2);
+		}
+	}	
 	int length = 60;
 	for (size_t i = 4; i < length; i++)
 	{

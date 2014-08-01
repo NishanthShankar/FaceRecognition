@@ -14,7 +14,7 @@ using namespace cv;
 String faceFile = "C:\\OpenCV\\opencv\\sources\\data\\haarcascades\\haarcascade_frontalface_alt2.xml";
 String eyeFile = "C:\\OpenCV\\opencv\\sources\\data\\haarcascades\\haarcascade_mcs_righteye.xml";
 String earFile = "C:\\OpenCV\\opencv\\sources\\data\\haarcascades\\haarcascade_mcs_rightear.xml";
-
+int addd(int, int);
 
 void rotate(cv::Mat& src, double angle, cv::Mat& dst, cv::Point centre = cv::Point())
 {

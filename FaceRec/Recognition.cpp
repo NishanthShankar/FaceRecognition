@@ -2,7 +2,7 @@
 #include <opencv2\features2d\features2d.hpp>
 #include <opencv2\imgproc\imgproc.hpp>
 #include <opencv2\objdetect\objdetect.hpp>
-#include<opencv2/highgui/highgui.hpp>
+#include <opencv2/highgui/highgui.hpp>
 #include <opencv2\contrib\contrib.hpp>
 #include <Windows.h>
 #include <stdio.h>
@@ -22,7 +22,7 @@ std::string faceXML = "C:\\OpenCV\\opencv\\sources\\data\\haarcascades\\haarcasc
 CascadeClassifier faceDet(faceXML);
 void testing();
 void training();
-
+void update(string,string);
 class SkinDetector
 {
 public:
@@ -57,7 +57,8 @@ public:
 void main()
 {
 	//training();
-	string names[] = { "Ashish", "Chintak", "Mike", "Nishanth", "Pranav", "Vishal", "Vivek", "Raji", "Natasha", "Girish", "Manikam", "Gaurav"};
+	update("LBPHAllNew", "LBPHAllNew2");
+            	string names[] = { "Ashish", "Chintak", "Mike", "Nishanth", "Pranav", "Vishal", "Vivek", "Raji", "Natasha", "Girish", "Manikam", "Gaurav"};
 	//Sound Test
 	irrklang::ISoundEngine* soundPlayer = irrklang::createIrrKlangDevice();
 	if (!soundPlayer)
@@ -71,7 +72,7 @@ void main()
 	
 	//cv::Ptr<cv::FaceRecognizer> model = cv::createFisherFaceRecognizer();//
 	cv::Ptr<cv::FaceRecognizer> model = cv::createLBPHFaceRecognizer(1, 8, 8, 8, 90);//
-	model->load("C://LensBricks//LBPHAll.yml");
+	model->load("C://LensBricks//models/face/LBPHAllNew.yml");
 	DIR *fd;
 	string sPath = "C:\\LensBricks\\Datasets\\Office\\Face\\images3\\front/";
 	dirent* folder;
@@ -94,6 +95,9 @@ void main()
 		cv::imshow("image", frame);
 		cv::waitKey(1);
 		model->predict(frame, predicted, confidence);
+		cout << predicted << "\t" << confidence << endl;
+	}
+	{
 		cout << (int)predicted << "\t" << confidence << "\t" << names[predicted - 1] << endl;
 		if (predicted < 0) 
 		{
@@ -102,12 +106,12 @@ void main()
 			int countdown = 1000;
 			Sleep(1000);
 			cout << "Please smile at the camera\n";
-			continue;
+			//continue;
 		}
 		string soundFile = "C:\\LensBricks\\gitProjects\\FaceRecognition\\Sound\\" + names[predicted - 1] + ".mp3";
 	//	soundPlayer->play2D(soundFile.c_str());
 	//	Sleep(1000);
-		cv::waitKey(100);
+		cv::waitKey(1);
 	}
 }
 
@@ -136,7 +140,7 @@ void testing()
 			resize(frame, frame, cv::Size(150, 150));
 			cvtColor(frame, frame, CV_BGR2GRAY);
 			cv::imshow("image",frame);
-			cv::waitKey(1);
+			cv::waitKey();
 			cout << model->predict(frame) << endl;
 		}
 	}
@@ -182,8 +186,8 @@ void training()
 	cv::Ptr<cv::FaceRecognizer> LBPModel = cv::createLBPHFaceRecognizer();
 	fischerModel->train(training, classes);
 	LBPModel->train(training, classes);
-	fischerModel->save("C://LensBricks//FischerAll.yml");
-	LBPModel->save("C://LensBricks//LBPHAll.yml");
+	fischerModel->save("C://LensBricks//FischerAllNew.yml");
+	LBPModel->save("C://LensBricks//models/face/LBPHAllNew.yml");
 	Mat testFrame = imread("C:/LensBricks/Datasets/Office/Face/classes/Mike/4_54.png");
 	resize(testFrame, testFrame, cv::Size(150, 150));
 	cvtColor(testFrame, testFrame, CV_BGR2GRAY);
@@ -223,6 +227,46 @@ void recognize()
 		//predict gender then person
 		//play sound acordingly
 	}
+}
+
+void update(string ModelName, string outModelName)
+{
+	cv::Ptr<cv::FaceRecognizer> model = createLBPHFaceRecognizer();
+	model->load("C:/LensBricks/models/face/" + ModelName + ".yml");
+	DIR *fd;
+	string sPath = "C:\\LensBricks\\Datasets\\Office\\Face\\882014\\results\\mFace/";
+	dirent* folder;
+	string filename;
 	
-	 
+	std::vector<cv::Mat> training;
+	std::vector<int>classes;
+	string folderPath = sPath;
+	char *path = new char[folderPath.length() + 1];
+	strcpy(path, folderPath.c_str());
+	fd = opendir(path);
+	int label;
+	std::vector<cv::Mat> trainings;
+	std::vector<int> labels;
+	while (folder = readdir(fd))
+	{
+		cv::Mat frame;
+		cout << folder->d_name << endl;
+		filename = folder->d_name;
+		if (filename == "." || filename == "..")
+			continue;
+		frame = imread(folderPath + filename);
+		cv::imshow("display", frame);
+		label = cv::waitKey();
+		//cout << label - 48 << endl;
+		resize(frame, frame, cv::Size(150, 150));
+		cvtColor(frame, frame, CV_BGR2GRAY);
+		if (label == 27)
+			break;
+		if (label > 60)
+			continue;
+		trainings.push_back(frame);
+		labels.push_back(label-48);
+	}
+	model->update(trainings, labels);
+	model->save("C:/Lensbricks/models/face/" + outModelName + ".yml");
 }

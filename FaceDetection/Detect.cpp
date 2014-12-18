@@ -7,6 +7,7 @@
 #include <iostream>
 #include <stdio.h>
 #include <fstream>
+#include <flandmark_detector.h>
 
 
 using namespace std;
@@ -16,8 +17,9 @@ String faceFile = "C:\\OpenCV\\opencv\\sources\\data\\haarcascades\\haarcascade_
 String profileFaceFile = "C:\\OpenCV\\opencv\\sources\\data\\haarcascades\\haarcascade_profileface.xml";
 String eyeFile = "C:\\OpenCV\\opencv\\sources\\data\\haarcascades\\haarcascade_mcs_righteye.xml";
 String earFile = "C:\\OpenCV\\opencv\\sources\\data\\haarcascades\\haarcascade_mcs_leftear.xml";
-CascadeClassifier fullbody("C:/OpenCV/opencv/sources/data/haarcascades/haarcascade_mcs_upperbody.xml");
+CascadeClassifier fullbody("C:/OpenCV/opencv/sources/data/haarcascades/haarcascade_fullbody.xml");
 int addd(int, int);
+#if 0
 void rotate(cv::Mat& src, double angle, cv::Mat& dst, cv::Point centre = cv::Point())
 {
 	int len = std::max(src.cols, src.rows);
@@ -105,6 +107,7 @@ int faceDetect(int fileNumber, string view)
 	{
 		return 1;
 	}
+	
 	char CFE = 0;
 	cv::Mat skinFrame;
 	cv::Scalar lower(0, 135, 100);
@@ -142,6 +145,7 @@ int faceDetect(int fileNumber, string view)
 				}
 			}
 			cv::rectangle(dispFrame, faceBox[i], Scalar(255, 0, 255));
+		
 			cropped = frame(faceBox[i]);
 			tempBox = faceBox[i];
 			tempBox.height = round(tempBox.height / 1.75);
@@ -155,6 +159,7 @@ int faceDetect(int fileNumber, string view)
 			frameNumber++;
 		}
 		cv::imshow("display", dispFrame);
+		
 		CFE=cv::waitKey(1);
 	}
 	return 1;
@@ -177,47 +182,129 @@ void peopleDetect()
 		for (size_t i = 0; i < found.size(); i++)
 		{
 			cv::rectangle(frame, found[i], cv::Scalar(255, 0, 255), 2);
+			
 		}
 		imshow("frame", frame);
 		cv::waitKey(1);
 	}
 }
-void main()
+#endif
+int main()
 {
-	int fileNumber[] = {7, 8,0};
-#if 0
+	cv::VideoCapture fileInput("C:\\LensBricks\\study\\3.avi");
+	cv::VideoWriter writer("C:\\LensBricks\\study\\3new.avi", CV_FOURCC('D', 'I', 'V', 'X'), 30, cv::Size(600, 480));
+	cv::Mat frame;
+	int frameCount = 30;
+	cv::Rect roi(340, 0, 600, 480);
+	fileInput.set(CV_CAP_PROP_POS_FRAMES, frameCount);
+
+	while (true)
+	{
+		fileInput >> frame;
+		frameCount++;
+		writer << frame(roi); 
+		//cv::rectangle(frame, roi, cv::Scalar(255, 0, 0), 2);
+		std::cout << "frame number: " << frameCount << std::endl;
+		cv::imshow("frame", frame(roi));
+		if (frameCount > 420) break;
+		int c = cv::waitKey(10);
+		if (c == 27) break;
+	}
+	writer.release();
+	return 0;
+
+	/*
+	int fileNumber[] = { 7, 8, 0 };
+
+	cv::VideoCapture fileInput("C:\\LensBricks\\study\\ch01_20140706174402.mp4");
+	cv::VideoCapture fileInput2("C:\\LensBricks\\study\\ch04_20140706192738.mp4"); 
+	cv::Mat inputFrame;
+	cv::Mat inputFrame2;
+	fileInput >> inputFrame;
+	fileInput2 >> inputFrame2;
+	string pathh = "C:\\LensBricks\\study\\ch1.avi";
+	string pathh2 = "C:\\LensBricks\\study\\ch2.avi";
+	cv::VideoWriter fileOutput;
+	cv::VideoWriter fileOutput2;
+	fileOutput.open(pathh, CV_FOURCC('D', 'I', 'V', 'X'), 30, inputFrame.size());
+	fileOutput2.open(pathh2, CV_FOURCC('D', 'I', 'V', 'X'), 30, inputFrame2.size());
+	int framenumber = 0;
+	char CFE = 0;
+	while (CFE != 27)
+	{
+		framenumber++;
+		fileInput >> inputFrame;
+		if (inputFrame.empty())
+			break;
+		imshow("output", inputFrame);
+		fileOutput.write(inputFrame);
+		
+	}
+	fileOutput.release();
+	CFE = 0;
+	while (CFE != 27)
+	{
+		fileInput2 >> inputFrame2;
+		if (inputFrame2.empty())
+			break;
+		fileOutput.write(inputFrame2);
+		imshow("output", inputFrame);
+		CFE = waitKey(1);
+	}
 	
-	//cv::VideoCapture fileInput("C:/LensBricks/Datasets/Collective/second/caml_2014-08-03-16-51-34.avi");
-	int frameJump = (0 * 60 + 1.1) * 60 * 30;
+	fileOutput2.release();
+	return;
+	*/
+	
+	/*
+	//int frameJump = (0 * 60 + 1.1) * 60 * 30;
 	//fileInput.set(CV_CAP_PROP_POS_FRAMES, frameJump);
 	CascadeClassifier faceDetector(faceFile);
-	cv::Mat inputFrame;
 	std::vector<cv::Rect> faceBoxes;
-	CascadeClassifier smileDetector("C:/OpenCV/opencv/sources/data/haarcascades/haarcascade_smile.xml");
+	FLANDMARK_Model *fModel = flandmark_init("C:/LensBricks/models/flandmark_model.dat");
+	double *landmarks = (double*)malloc(2 * fModel->data.options.M*sizeof(double));
+	int index = 1;
 	while (1)
 	{
 		std::vector<cv::Rect>::iterator it;
-		//fileInput >> inputFrame;
-		string filename = "C:/LensBricks/Samples/SmilingFace.png";
-		inputFrame = imread(filename);
+		fileInput >> inputFrame;
+		string filename = "";
+		//inputFrame = imread(filename);
 		//resize(inputFrame, inputFrame, cv::Size(960, 540));
 		//cv::Rect ROI(350, 10, 400, 400);
-		//fullbody.detectMultiScale(inputFrame(ROI), faceBoxes);
-		smileDetector.detectMultiScale(inputFrame, faceBoxes);
+ 		fullbody.detectMultiScale(inputFrame, faceBoxes);
+		cv::Mat dispFrame = inputFrame.clone();
+		cvtColor(inputFrame, inputFrame, CV_BGR2GRAY);
+		//faceDetector.detectMultiScale(inputFrame, faceBoxes);
 		for (it = faceBoxes.begin(); it < faceBoxes.end(); it++)
 		{
-			cv::rectangle(inputFrame, *it, cv::Scalar(255, 0, 255), 2);
+			cv::rectangle(dispFrame, *it, cv::Scalar(255, 0, 255), 2);
 			cout << *it << endl;
-		}
-		imshow("faces", inputFrame);
-		cv::waitKey(1);
+			/*int bbox[4];
+			bbox[0] = it->x;
+			bbox[1] = it->y;
+			bbox[2] = it->x + it->width;
+			bbox[3] = it->x + it->height;
+			flandmark_detect(&(IplImage)inputFrame, bbox, fModel, landmarks);
+			cout << landmarks[0] << landmarks[1];
+			circle(dispFrame, cv::Point(landmarks[0], landmarks[1]), 3, cv::Scalar(255, 0, 0), CV_FILLED);
+			for (int i = 2; i < 2 * fModel->data.options.M; i += 2)
+			{
+				circle(dispFrame, cv::Point(landmarks[i], landmarks[i + 1]), 2, cv::Scalar(255, 0, 0), CV_FILLED);
+			}*/
+	/*	}
+		imshow("faces", dispFrame);
+		
+		imwrite("C:/LensBricks/false.png", dispFrame);
+		cv::waitKey();
+		index++;
 	}
-#endif
-#if 1
+	#endif
+	#if 1
 	for (int i = 0; i < 68; i++)
 	{
 		faceDetect(i, "front");
 		//faceDetect(i, "side");
 	}
-#endif	
+	#endif	*/
 }
